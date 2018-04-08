@@ -7,7 +7,9 @@
 # FIXME: Package Level Imports
 import gevent
 from gevent.server import DatagramServer
-from gevent import socket
+from gevent import socket, queue
+import gevent.monkey; gevent.monkey.patch_all()
+import signal
 from file_io import FileReader, FileWriter
 import time
 import sys
@@ -39,7 +41,7 @@ class Sender(object):
     """
     - Read fixed blk_size from a file_obj
     - Initiates connection to a Receiver by send it a INITRQ packet
-    - Waits for the server to reply with a ACK packet having block_no = 0
+    - Waits for the server to reply with a ACK packet having block_no = 0.
     - Convert the file_obj data to DATA packet. Writes to the socket. The block_no should be 1
     - Waits for the server to send the ACK. If the server does not send the packet within *some_time*, resend the packet.
         - Wait till timeout -- after which disconnect the client
@@ -75,9 +77,11 @@ class Sender(object):
         # setup client sock --- later
         self.sock = None
         self.upload = self.start   # create alias to start
+        self._send_queue = gevent.queue.Queue()  # Add processed packets to the send queue
 
     def start(self, host, port):
         self.sock = gevent.socket.socket(type=socket.SOCK_DGRAM)
+        self.sock.settimeout(5)   # set socket to non-blocking mode..
         conn = (host, port)
         try:
             logger.info('Attempting to connect to server at {}'.format(conn))
@@ -87,20 +91,26 @@ class Sender(object):
             self.sock.send(self.init_rq_packet)
             logger.info('Init packet sent successfully')
             while not (self.transfer_complete or self.error_occurred):
-                self.handle_ack()
+                jobs = [gevent.spawn(self.handle_ack), gevent.spawn(self.send_packet)]
+                gevent.joinall(jobs)
+                # self.handle_ack()
+            gevent.killall(jobs)
         except HFTPError:
             logger.exception('Error occurred file parsing/encoding packet contents')
         except socket.error:
             logger.exception('Failed connection to server/receiver :-( {}. Please try again'.format(conn))
         except KeyboardInterrupt:
             logger.exception('Shutting down client')
-            self.stop()   # FIXME: any of the errors occur, no point in continuing. Put this in finally
+        finally:
+            self.stop()
 
     def stop(self):
         self.sock.close()
 
     def handle_ack(self):
-        """Validate that the provided ACK is valid"""
+        """
+        Handles ACK packets. A response would triggered only when a valid ACK is received.
+        """
         logger.info('Waiting to receive an ACK from Server')
         if self._check_time():
             data, address = self.sock.recvfrom(MIN_PACKET_SIZE)
@@ -113,22 +123,27 @@ class Sender(object):
                 # update the last_active time to indicate that an ack has been received in **recent times**
                 self.last_active = time.time()
                 if block_no == self.block_no:
+                    logger.info('ACK Matches!')
                     if self.block_no == 0:
                         logger.info('ACK Received. Initiating Transfer')
                     else:
                         logger.info('ACK Received for packet no {}'.format(self.block_no))
-                    self.block_no += 1
                     # Finally initiate transfer
-                    self._send_data(address)
+                    self.block_no += 1
+                    self._add_to_send_queue(address)
                 else:
+                    # Better luck next time!!
                     logger.info('Received ACK packet. But of the wrong sequence/block_no. Dropping packet')
+                    logger.debug('Contents of wrong ACK packet: {}. Block No: {}'.format(data, block_no))
+                    # Nothing to do here, send_packet worker would send the DATA again to see if we fetch any results
         else:
             # Time this. If Ack not received in 10s (say) resend "last_packet"
             # If Ack not received in 30s (say)-- disconnect
             self.error_occurred = True
 
-    def _send_data(self, address=None, packet=None):
-        """Send a packet to the receiver"""
+    # FIXME: Refactor this function!!
+    def _add_to_send_queue(self, address=None, packet=None):
+        """Add a packet to be sent to the receiver"""
         if address is None:
             address = self.sock.getpeername()
         if packet is None:
@@ -140,11 +155,24 @@ class Sender(object):
                     self.packet_factory.check_type(packet_type='data', data=self.new_packet):
                 if len(self.last_packet) != MAX_PACKET_SIZE:
                     self.terminating_block_no = self.new_packet.block_no
-                self.sock.send(self.new_packet)  # UDP version
+                self._send_queue.put(self.new_packet)
         else:
             logger.info('Sending last packet again since no ACK was received')
-            logger.debug('Resent packet contents: {}'.format(packet))
-            self.sock.send(packet)
+            logger.info('Resent packet contents: {}'.format(packet))
+            self._send_queue.put(packet)
+
+    def send_packet(self):
+        """
+        The actual worker that would send a packet to the remote server
+        :return: None
+        """
+        # Check to see if there is any packet in the queue that is to be sent
+        # If is is, send that packet. Otherwise if the queue is empty, send the last packet.
+        if self._send_queue.qsize() > 0:
+            packet = self._send_queue.get()
+        else:
+            packet = self.last_packet
+        self.sock.send(packet)
 
     def _check_time(self):
         """
@@ -162,7 +190,7 @@ class Sender(object):
             # if an ACK is not received within the last no_response_time but may be still connected!
             # this is supposed to handle the UDP **packet lost** scenario.
             # resend the last packet and hope it reaches the server
-            self._send_data(packet=self.last_packet)
+            self._add_to_send_queue(packet=self.last_packet)
             return True
         else:
             # everything is jolly good! Nothing to do here. Move Along -- :-)
@@ -188,7 +216,7 @@ class Receiver(object):
         self.timeout = timeout
 
     def handle(self, data, address):
-        self._clean_up()   # clean-up
+        self._clean_up()   # clean-up TODO: remove clean_up from here?
         if address not in self.client_state.keys():
             logger.info('New client has connected. Connection from {}:{}'.format(address[0], address[1]))
             # check data is valid INITRQ. If not, no point in continuing!
@@ -289,6 +317,7 @@ class Receiver(object):
         sock.bind(conn)
         self.listener = DatagramServer(sock, self.handle)
         try:
+            # server = gevent.spawn
             self.listener.serve_forever()
         except HFTPError:
             # FIXME: proper exception handling
