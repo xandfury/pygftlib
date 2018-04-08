@@ -19,10 +19,10 @@ from pygftlib.packet_factory import PacketFactory
 from pygftlib.exceptions import *
 
 import logging
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 # For debugging --
-import logging as logger
-logger.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+# import logging as logger
+# logger.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 class BaseProtocol (object):
@@ -96,7 +96,7 @@ class Sender(object):
                 logger.info('File Transfer Complete!!')
             else:
                 logger.info('File Could not be Transferred !')
-        except HFTPError:
+        except PYGFTError:
             logger.exception('Error occurred file parsing/encoding packet contents')
         except KeyboardInterrupt:
             logger.exception('Shutting down client')
@@ -323,7 +323,7 @@ class Receiver(object):
         try:
             # server = gevent.spawn
             self.listener.serve_forever()
-        except HFTPError:
+        except PYGFTError:
             # FIXME: proper exception handling
             logger.exception('Unable to parse contents, create file for INITRQ')
             # TODO: disconnect the client

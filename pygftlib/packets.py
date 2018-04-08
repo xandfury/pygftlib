@@ -6,11 +6,11 @@ import struct
 import sys
 
 from pygftlib.helpers import *
-# import logging
-# logger = logging.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 # For debugging --
-import logging as logger
-logger.basicConfig(stream=sys.stdout, level=logger.INFO)
+# import logging as logger
+# logger.basicConfig(stream=sys.stdout, level=logger.INFO)
 # TODO: More logging in b/w classes
 
 

@@ -5,12 +5,13 @@ This module implements functionality to easy read and write to files. Based on g
 import os
 from datetime import datetime
 from slugify import slugify
-
-import logging as logger
 import sys
-# logger = logging.getLogger(__name__)
+
+import logging
+logger = logging.getLogger(__name__)
 # For debugging --
-logger.basicConfig(stream=sys.stdout, level=logger.INFO)
+# import logging as logger
+# logger.basicConfig(stream=sys.stdout, level=logger.INFO)
 # TODO: More logging in b/w classes
 
 
