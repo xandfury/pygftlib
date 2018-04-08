@@ -1,5 +1,5 @@
 HTFTP (Handicapped Transfer File Transfer Protocol) - is a simple rfc1350 based protocol that works on UDP/IP. This is very much similar to TFTP protocol - only lighter - as you might have guessed :-)
-For the sake of this protocol, we throw the age-old/conventional client/server model out of the window; There are only 2 type of peers:
+For the sake of this protocol, there are only 2 type of peers:
 - Sender (the one that sends a file)
 - Receiver (take a guess)
 
@@ -29,7 +29,7 @@ Can only be sent by the Receiver.
 ***** Error Packet
 An error is signalled by sending an error packet.  This packet is not acknowledged, and not retransmitted.
 There are 3 types of errors:
-file not found, access violation, disk full #TODO: complete this.
+file not found, access violation, disk full
 
 *** Connection Establishment
 
