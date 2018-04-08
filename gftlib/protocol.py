@@ -85,6 +85,7 @@ class Sender(object):
             # TODO: maybe make multiple connection attempts?
             # send the init_packet
             self.sock.send(self.init_rq_packet)
+            logger.info('Init packet sent successfully')
             while not (self.transfer_complete or self.error_occurred):
                 self.handle_ack()
         except HFTPError:
@@ -100,7 +101,8 @@ class Sender(object):
 
     def handle_ack(self):
         """Validate that the provided ACK is valid"""
-        if check_time:
+        logger.info('Waiting to receive an ACK from Server')
+        if self._check_time():
             data, address = self.sock.recvfrom(MIN_PACKET_SIZE)
             # check if the data has valid op_code and is of correct length
             if not self.packet_factory.is_valid(packet_type='ack', data=data):
@@ -134,8 +136,8 @@ class Sender(object):
                                                            data=self.file_obj.read_chunk(DATA_SIZE))
             self.last_packet = self.new_packet
             logger.info('Sending packet to remote host: {}'.format(address))
-            if self.packet_factory.is_valid(packet_type=data, data=self.new_packet) and \
-                    self.packet_factory.check_type(packet_type=data, data=self.new_packet):
+            if self.packet_factory.is_valid(packet_type='data', data=self.new_packet) and \
+                    self.packet_factory.check_type(packet_type='data', data=self.new_packet):
                 if len(self.last_packet) != MAX_PACKET_SIZE:
                     self.terminating_block_no = self.new_packet.block_no
                 self.sock.send(self.new_packet)  # UDP version
@@ -144,7 +146,7 @@ class Sender(object):
             logger.debug('Resent packet contents: {}'.format(packet))
             self.sock.send(packet)
 
-    def check_time(self):
+    def _check_time(self):
         """
         Checks whether an ack has been received in the last "max_no_response_time". If it had been done so, return True
         else send False to disconnect the client
@@ -152,7 +154,9 @@ class Sender(object):
         """
         if int(time.time() - self.last_active) > self.max_no_response_time:
             logger.info('Receiver/server is not responding. Closing connection')
-            return False
+            # return False
+            return True  # Fixme: change to false to disconnect client
+            # for debugging..
         elif (int(time.time() - self.last_active) < self.max_no_response_time) \
                 and (int(time.time() - self.last_active) > self.no_response_time):
             # if an ACK is not received within the last no_response_time but may be still connected!
@@ -222,7 +226,8 @@ class Receiver(object):
                 self.send_ack(address)
             elif self.packet_factory.check_type('data', data):
                 # The packet is DATAPacket. Nice! Parse the contents of the packet
-                content, block_no = self.packet_factory.from_bytes(data)
+                block_no, content = self.packet_factory.from_bytes(data)
+                block_no = int(block_no)  # covert block no to int if it is a str # FIXME: remove this
                 # check the block_no on the file. Only write when the block_no on the packet +1 than block_number in
                 # client's state
                 if self.client_state[address]['block_number'] == (block_no - 1):

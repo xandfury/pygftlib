@@ -6,6 +6,13 @@ import os
 from datetime import datetime
 from slugify import slugify
 
+import logging as logger
+import sys
+# logger = logging.getLogger(__name__)
+# For debugging --
+logger.basicConfig(stream=sys.stdout, level=logger.INFO)
+# TODO: More logging in b/w classes
+
 
 def sanitize_file_name(name):
     """

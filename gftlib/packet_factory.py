@@ -5,6 +5,14 @@ from packets import INITRQPacket, ERRPacket, DATAPacket, ACKPacket
 from exceptions import MalformedPacketException
 from utils import *
 
+# import logging as logger
+import logging
+import sys
+logger = logging.getLogger(__name__)
+# For debugging --
+# logger.basicConfig(stream=sys.stdout, level=logger.INFO)
+# TODO: More logging in b/w classes
+
 OP_CODES = {
     'INITRQ': b'\x00\x01',
     'DATA': b'\x00\x02',
@@ -39,23 +47,29 @@ class PacketFactory(object):
         - error_code, error_msg in case of ERR
         """
         op_code = data[:2]
+        logger.debug('Received data for decoding. Raw contents: {}. Op_code : {}'.format(data, op_code))
         if op_code not in OP_CODES:
+            logger.debug('Invalid OP_CODE')
             raise MalformedPacketException('Unidentified Packet Type - {}'.format(op_code))
         else:
             packet_instance = PACKET_TYPES[OP_CODES[op_code]]()
             if op_code == OP_CODES['INITRQ']:
+                logger.debug('Packet type is INITRQ')
                 file_name = packet_instance.parse_packet(data=data).file_name
                 return file_name
             elif op_code == OP_CODES['DATA']:
-                block_no, content = packet_instance.parse_packet(data=data).block_number, \
-                                    packet_instance.parse_packet(data=data).data
+                logger.debug('Packet type is DATA')
+                block_no, content = int(packet_instance.parse_packet(data=data).block_number), packet_instance.\
+                    parse_packet(data=data).data
                 return block_no, content
             elif op_code == OP_CODES['ACK']:
-                block_no = packet_instance.parse_packet(data=data).block_number
+                logger.debug('Packet type is ACK')
+                block_no = int(packet_instance.parse_packet(data=data).block_number)
                 return block_no
             elif op_code == OP_CODES['ERR']:
-                err_code, err_msg = packet_instance.parse_packet(data=data).err_code, \
-                                    packet_instance.parse_packet(data=data).err_msg
+                logger.debug ('Packet type is ERR')
+                err_code, err_msg = packet_instance.parse_packet(data=data).err_code, packet_instance.parse_packet(
+                    data=data).err_msg
                 return err_code, err_msg
 
     @classmethod

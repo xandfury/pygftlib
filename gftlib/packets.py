@@ -96,7 +96,9 @@ class DATAPacket(BasePacket):
 
     def parse_packet(self, data):
         try:
-            self.block_number, self.data = unpack_short_int(data[2:4]), data[4:].decode('ascii')
+            #  self.block_number, self.data = unpack_short_int(data[2:4]), data[4:].decode('ascii')
+            #  Fixme: ^^ write raw bytes to a file
+            self.block_number, self.data = unpack_short_int (data[2:4]), data[4:]
         except ValueError:
             logger.exception('Could not parse request: {}'.format(data))
         return self
