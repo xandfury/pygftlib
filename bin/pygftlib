@@ -21,7 +21,6 @@ def logo(module=None, license='MIT'):
     Version:     {}
     Module:      {}
     License:     {}
-    
     Credits:     Made by Abhinav Saxena <xandfury@gmail.com>.
                  Special thanks to Daniel Haslinger and Team Honeynet for letting me do this!
     """.format(pygftlib.__version__, module, license))
@@ -95,5 +94,4 @@ Hence in order to transfer files -- You need both sender and receiver
 if __name__ == '__main__':
     # TODO: setup logger correctly
     # Command line_options to a nifty cli
-    logo()
     AgrsParse()
