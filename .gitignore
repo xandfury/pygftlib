@@ -257,6 +257,4 @@ test_udp.*
 # Files that are written to the disk
 2018-*
 test_udp.*
-data.txt
 result
-pygftlib

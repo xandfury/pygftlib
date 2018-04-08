@@ -1,8 +1,17 @@
-Gevent based simple File Transfer Library
+[![Build Status](https://travis-ci.org/xandfury/pygftlib.svg?branch=master)](https://travis-ci.org/xandfury/pygftlib)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/764032d4494a4b8dbd6024419fc75e64)](https://www.codacy.com/app/xandfury/pygftlib?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=xandfury/pygftlib&amp;utm_campaign=Badge_Grade)
 
-Two applications (written in python) - one reads a file and sends it over the network to the other application,
-which stores the file into its CWD. How would you do it (without using a framework that already does this)?
-L4 protocol of choice would be UDP, the reliability part is _your_ duty
+### Gevent based simple File Transfer Library
+
+***Problem Statement***
+
+> Two applications (written in python) - one reads a file and sends it over the network to the other application,
+  which stores the file into its CWD. How would you do it (without using a framework that already does this)?
+  L4 protocol of choice would be UDP, the reliability part is _your_ duty
+
+***Solution***
+
+Sender side is implemented as UDP clients via `gevent.sockets`, revceiver side is implemented using `gevent.server.DatagramServer`. I created 4 packet types on the top of UDP for TCP like features. This is to avoid data corruption of files due to problems relating to UDP. Essentially pygftlib introduces sequencing and acknowledgement mechanism to ensure reliability.
 
 ### Install
 ```
