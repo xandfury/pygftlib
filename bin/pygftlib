@@ -8,8 +8,23 @@ from pygftlib.protocol import Sender, Receiver
 
 logger = pygftlib.misc.create_logger()
 
-def logo():
-    pass
+
+def logo(module=None, license='MIT'):
+    print(r"""
+                        __ _   _ _ _     
+ _ __  _   _  __ _ / _| |_| (_) |__  
+| '_ \| | | |/ _` | |_| __| | | '_ \ 
+| |_) | |_| | (_| |  _| |_| | | |_) |
+| .__/ \__, |\__, |_|  \__|_|_|_.__/ 
+|_|    |___/ |___/                   
+
+    Version:     {}
+    Module:      {}
+    License:     {}
+    
+    Credits:     Made by Abhinav Saxena <xandfury@gmail.com>.
+                 Special thanks to Daniel Haslinger and Team Honeynet for letting me do this!
+    """.format(pygftlib.__version__, module, license))
 
 
 class AgrsParse(object):
@@ -44,6 +59,7 @@ Hence in order to transfer files -- You need both sender and receiver
                             default='127.0.0.1')
         parser.add_argument('--port', help='port number', default=12345, type=int)
         args = parser.parse_args(sys.argv[2:])
+        logo(module='Sender Module. Please make sure Receiver/Server is already running')
         if os.path.isfile(args.filename):
             logger.info('Found file {}'.format(args.filename))
         else:
@@ -65,6 +81,7 @@ Hence in order to transfer files -- You need both sender and receiver
         parser.add_argument('--host', help='Server (Receiver) bind address', default='127.0.0.1')
         parser.add_argument('--port', help='Server (Receiver) bind port', default=12345, type=int)
         args = parser.parse_args(sys.argv[2:])
+        logo(module='Receiver Module. Please use compatible client to connect with this!')
         # TODO: validate host_ip and port
         receiver = Receiver()
         try:
@@ -78,4 +95,5 @@ Hence in order to transfer files -- You need both sender and receiver
 if __name__ == '__main__':
     # TODO: setup logger correctly
     # Command line_options to a nifty cli
+    logo()
     AgrsParse()

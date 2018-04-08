@@ -96,6 +96,8 @@ class Sender(object):
                 logger.info('File Transfer Complete!!')
             else:
                 logger.info('File Could not be Transferred !')
+        except socket.error:
+            logger.exception('Socket Error! Cannot establish connection! Sorry')
         except PYGFTError:
             logger.exception('Error occurred file parsing/encoding packet contents')
         except KeyboardInterrupt:
