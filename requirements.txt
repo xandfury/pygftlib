@@ -1,0 +1,2 @@
+gevent
+python-slugify
