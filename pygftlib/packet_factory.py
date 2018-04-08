@@ -1,9 +1,9 @@
 """
 Define packet_metrics -- such as since when have not sent/received a packet.
 """
-from packets import INITRQPacket, ERRPacket, DATAPacket, ACKPacket
-from exceptions import MalformedPacketException
-from utils import *
+from pygftlib import *   # TODO: only import what is required
+from pygftlib.packets import INITRQPacket, ERRPacket, DATAPacket, ACKPacket
+from pygftlib.exceptions import MalformedPacketException
 
 # import logging as logger
 import logging

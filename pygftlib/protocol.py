@@ -10,12 +10,13 @@ from gevent.server import DatagramServer
 from gevent import socket, queue
 import gevent.monkey; gevent.monkey.patch_all()
 import signal
-from file_io import FileReader, FileWriter
 import time
 import sys
-from utils import *
-from packet_factory import PacketFactory
-from exceptions import *
+
+from pygftlib import *
+from pygftlib.file_io import FileReader, FileWriter
+from pygftlib.packet_factory import PacketFactory
+from pygftlib.exceptions import *
 
 import logging
 # logger = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class Sender(object):
             logger.fatal('No filename supplied for Sender. Filename cannot be empty!')
             sys.exit(3)
         self.file_obj = FileReader(self.file_name)
+        self.last_active = None
 
         self.packet_factory = PacketFactory
         self.init_rq_packet = self.packet_factory.to_bytes(type='initrq', file_name=self.file_name)
@@ -68,7 +70,6 @@ class Sender(object):
         self.block_no = 0
         self.terminating_block_no = None
 
-        self.last_active = time.time()   # time since last we received a DATA packet from the server(Receiver)
         # Initialize to current time.
         self.max_no_response_time = MAX_NO_RESPONSE_TIME  # disconnect the client if an ACK not received
         # within this time
@@ -86,6 +87,7 @@ class Sender(object):
             self.sock.connect(conn)
             # send the init_packet
             self.sock.send(self.init_rq_packet)
+            self.last_active = time.time ()  # time since last we received a DATA packet from the server(Receiver)
             logger.info('Init packet sent successfully')
             while not (self.transfer_complete or self.error_occurred):
                 gevent.joinall([gevent.spawn(self.handle_ack), gevent.spawn(self.send_packet)])
@@ -129,9 +131,9 @@ class Sender(object):
         """
         Handles ACK packets. A response would triggered only when a valid ACK is received.
         """
-        logger.info('Waiting to receive an ACK from Server')
-        if self._check_time():
+        if self._check_time() and (not self.transfer_complete):
             try:
+                logger.info ('Waiting to receive an ACK from Server')
                 data, address = self.sock.recvfrom(MIN_PACKET_SIZE)
                 # check if the data has valid op_code and is of correct length
                 if not self.packet_factory.is_valid(packet_type='ack', data=data):
@@ -142,7 +144,7 @@ class Sender(object):
                     # update the last_active time to indicate that an ack has been received in **recent times**
                     self.last_active = time.time()
                     if block_no == self.block_no:
-                        logger.info('ACK Matches!')
+                        logger.debug('ACK Matches! Received ACK with correct block_no')
                         if self.block_no == 0:
                             logger.info('ACK Received. Initiating Transfer')
                         else:
@@ -195,7 +197,7 @@ class Sender(object):
                 self._send_queue.put(self.new_packet)
         else:
             logger.info('Sending last packet again since no ACK was received')
-            logger.info('Resent packet contents: {}'.format(packet))
+            logger.debug('Resent packet contents: {}'.format(packet))
             self._send_queue.put(packet)
 
 

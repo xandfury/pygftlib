@@ -5,11 +5,11 @@ Defining all packet type for the HFTP protocol.
 import struct
 import sys
 
-import logging as logger
-from helpers import *
-
+from pygftlib.helpers import *
+# import logging
 # logger = logging.getLogger(__name__)
 # For debugging --
+import logging as logger
 logger.basicConfig(stream=sys.stdout, level=logger.INFO)
 # TODO: More logging in b/w classes
 

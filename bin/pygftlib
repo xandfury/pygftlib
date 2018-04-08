@@ -1,0 +1,13 @@
+#!/usr/bin/python3
+import argparse
+
+from pygftlib import *
+
+
+def main():
+    print('hello world!')
+
+
+if __name__ == '__main__':
+    # Command line_options to a nifty cli
+    main()
