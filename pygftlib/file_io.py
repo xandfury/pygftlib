@@ -1,5 +1,5 @@
 """
-This module implements functionality to easy read and write to files. Based on gevent's sendfile
+This module implements functionality to easy read and write to files.
 """
 
 import os
@@ -9,10 +9,6 @@ import sys
 
 import logging
 logger = logging.getLogger(__name__)
-# For debugging --
-# import logging as logger
-# logger.basicConfig(stream=sys.stdout, level=logger.INFO)
-# TODO: More logging in b/w classes
 
 
 def sanitize_file_name(name):
@@ -20,7 +16,6 @@ def sanitize_file_name(name):
     Ensure that file_name is legal. Slug the filename and store it onto the server.
     This would ensure that there are no duplicates as far as writing a file is concerned.
     :param name: Name of the file
-    :return: slugify the file name to the format -
     """
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ' - ' + slugify(name)
 

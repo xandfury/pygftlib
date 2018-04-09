@@ -17,7 +17,8 @@ Sender side is implemented as UDP clients via `gevent.sockets`, revceiver side i
 ```
 sudo -H python3 install setup.py
 ```
-
+### Docs
+The documentation regarding what this is and how it is implemented can be found [here](DOCS.org)
 
 ### Demo
 ```

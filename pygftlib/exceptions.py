@@ -1,5 +1,5 @@
 """
-Exceptions relating to protocols
+Exceptions relating to protocol
 """
 
 

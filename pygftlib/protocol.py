@@ -1,10 +1,7 @@
 """
-- Define various functionality relating to sending and receiving different kinds of packets.
-- Keep context w.r.t states of the client/server. Maintain the last_pkt in case not ack is received or etc.
-- Read/Write from FileObjects - better interactions with those classes
+- Define and implement various functionality relating to sending and receiving different kinds of packets.
 - Sender UDP client; Receiver UDP DatagramServer
 """
-# FIXME: Package Level Imports
 import gevent
 from gevent.server import DatagramServer
 from gevent import socket, queue
@@ -20,9 +17,6 @@ from pygftlib.exceptions import *
 
 import logging
 logger = logging.getLogger(__name__)
-# For debugging --
-# import logging as logger
-# logger.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 class BaseProtocol (object):
@@ -80,7 +74,7 @@ class Sender(object):
 
     def upload(self, host, port):
         self.sock = gevent.socket.socket(type=socket.SOCK_DGRAM)
-        self.sock.settimeout(1)   # set socket to non-blocking mode.. But setting to 1 yeilds better results
+        self.sock.settimeout(1)   # set socket to non-blocking mode.. But setting to 1 yields better results
         conn = (host, port)
         try:
             logger.info('Attempting to connect to server at {}'.format(conn))
@@ -182,7 +176,6 @@ class Sender(object):
             self.transfer_complete = True
         self.sock.send(packet)
 
-    # FIXME: Refactor this function!!
     def _add_to_send_queue(self, address=None, packet=None):
         """Add a packet to be sent to the receiver"""
         if address is None:
@@ -206,12 +199,12 @@ class Sender(object):
 class Receiver(object):
     """
     - Start the UDP server on a host and port. Check for permissions to write on the CWD
-    - Accept an incoming connection. Check if the packet is INITRQ type else discard the packet. <Done>
-    - Send the ACK with block_no 0. Wait to receive DATA packet  <Done>
-    - Verify DATA has block_no == ACK block_no + 1  <Done>
+    - Accept an incoming connection. Check if the packet is INITRQ type else discard the packet.
+    - Send the ACK with block_no 0. Wait to receive DATA packet
+    - Verify DATA has block_no == ACK block_no + 1
         - If yes, write to file. Else discard packet with appropriate error code  <No error codes at the moment>
-        - Send ACK with block_no += 1    <Done>
-    - repeat till transfer_complete. size(DATA) < or != blk_size. Close File pointers   <Done>
+        - Send ACK with block_no += 1
+    - repeat till transfer_complete. size(DATA) < or != blk_size. Close File pointers
     """
 
     def __init__(self, timeout=None):
@@ -222,7 +215,7 @@ class Receiver(object):
         self.timeout = timeout
 
     def handle(self, data, address):
-        self._clean_up()   # clean-up TODO: remove clean_up from here?
+        self._clean_up()   # clean-up
         if address not in self.client_state.keys():
             logger.info('New client has connected. Connection from {}:{}'.format(address[0], address[1]))
             # check data is valid INITRQ. If not, no point in continuing!
@@ -261,7 +254,7 @@ class Receiver(object):
             elif self.packet_factory.check_type('data', data):
                 # The packet is DATAPacket. Nice! Parse the contents of the packet
                 block_no, content = self.packet_factory.from_bytes(data)
-                block_no = int(block_no)  # covert block no to int if it is a str # FIXME: remove this
+                block_no = int(block_no)  # covert block no to int if it is a str
                 # check the block_no on the file. Only write when the block_no on the packet +1 than block_number in
                 # client's state
                 if self.client_state[address]['block_number'] == (block_no - 1):
@@ -323,12 +316,10 @@ class Receiver(object):
         sock.bind(conn)
         self.listener = DatagramServer(sock, self.handle)
         try:
-            # server = gevent.spawn
             self.listener.serve_forever()
         except PYGFTError:
             # FIXME: proper exception handling
             logger.exception('Unable to parse contents, create file for INITRQ')
-            # TODO: disconnect the client
         except socket.timeout:
             pass
         except socket.error:

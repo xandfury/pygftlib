@@ -5,13 +5,10 @@ from pygftlib import *   # TODO: only import what is required
 from pygftlib.packets import INITRQPacket, ERRPacket, DATAPacket, ACKPacket
 from pygftlib.exceptions import MalformedPacketException
 
-# import logging as logger
 import logging
 import sys
 logger = logging.getLogger(__name__)
-# For debugging --
-# logger.basicConfig(stream=sys.stdout, level=logger.INFO)
-# TODO: More logging in b/w classes
+
 
 OP_CODES = {
     'INITRQ': b'\x00\x01',
@@ -92,7 +89,7 @@ class PacketFactory(object):
     @classmethod
     def check_type(cls, packet_type=None, data=None):
         """
-        Checks whether the given packet_type is the type it says it is!
+        Checks whether the given packet_type is the correct type
         :return: boolean True or False
         """
         if data is None:
@@ -105,10 +102,9 @@ class PacketFactory(object):
     @classmethod
     def is_valid(cls, packet_type=None, data=None):
         """
-        Checks whether a given packet is valid_packet of the said pckt_type.
+        Checks whether a given packet is valid_packet of the said packet_type.
         :param packet_type:
         :param data:
-        :return:
         """
         op_code = data[:2]
         if op_code not in OP_CODES:

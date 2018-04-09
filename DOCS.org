@@ -1,0 +1,89 @@
+*[[https://github.com/xandfury/pygftlib/][pygftlib]]* implements a simple rfc1350 based protocol that works on UDP/IP. This is very much similar to TFTP protocol - only lighter - as you might have guessed :-)
+For the sake of this protocol, there are only 2 type of peers:
+- Sender (the one that sends a file)
+- Receiver (take a guess)
+
+**** What is this and how it works?
+It may be used to transfer files between two systems. In brief:
+
+- Any transfer begins with Sender requesting to write a file.
+- If the Receiver grants the request, the connection is established.
+- The file is sent in fixed length blocks of 512 bytes(default).
+- Each data packet contains one block of data, must be acknowledged by the Receiver before the next packet can be sent.
+- Receiver must send these acknowledgment packets to the sender.
+- A data packet of less than 512 bytes signals termination of a transfer.
+- If a packet gets lost in the network, the intended party may retransmit his last packet (which may be data for sender or an acknowledgment for receiver), thus ensuring that packets are written in sequential order.
+- At a particular time, sender/receiver need to keep just one packet in hand (needed for retransmission), since the lock step acknowledgment guarantees that all older packets have been received.
+
+**** Packet Types
+pygftlib supports the following packet types
+
+***** Init-Request Packet(INITRQ)
+- Can only be sent by the sender(client) and is parsed by the receiver(server)
+- Follows the packet header.
+
+#+BEGIN_SRC 
+   
+               2 bytes    string    1 byte
+              ----------------------------
+    INITRQ   | 01    |  Filename  |   0  |
+              ----------------------------
+#+END_SRC
+
+- Opcode of this type of packet is 1.
+- Filename is also supplied in this packet. Note that the server slugifies this file name. This ensures that we do overwrite existing files.
+***** Data Packet
+- Can only be sent by the sender(client).
+- Follows the packet header
+
+#+BEGIN_SRC 
+                2 bytes    2 bytes       n bytes
+                ---------------------------------
+        DATA  | 02    |   Block #  |    Data    |
+                ---------------------------------
+#+END_SRC
+
+- Opcode of this type of packet is 2.
+- The block number implements packet sequencing. This in turn allows us to write files in proper order, avoiding data corruption.
+- As stated earlier, if the data packet size is less than 512 bytes, it means that this is the last packet and we would terminate the connection.
+***** Acknowledgment Packet(ACK)
+- Can only be sent by the receiver(server).
+- Follows the packet header
+
+#+BEGIN_SRC 
+                2 bytes    2 bytes
+                -------------------
+        ACK   | 03    |   Block #  |
+                --------------------
+#+END_SRC
+
+- Opcode of this type of packet is 3.
+- ACK must match the block(sequence) number of the data packet that was previously sent.
+- Unless the client receives the ACK it is expecting for the correspoding DATA packet, no new DATA would sent.
+- If the Server fails to send a proper ACK within a specfied time, the client disconnects - giving an error
+***** Error Packet
+**With a novel idea and all good intentions, this packet type isn't implemented.**
+- An error is signalled by sending an error packet.  This packet is not acknowledged, and not retransmitted.
+- Here is the header for this type of packet
+
+#+BEGIN_SRC 
+
+                2 bytes  2 bytes        string    1 byte
+                ----------------------------------------
+        ERROR | 04    |  ErrorCode |   ErrMsg   |   0  |
+                ----------------------------------------
+        Error Codes
+        Value     Meaning
+        0         Not defined, see error message (if any).
+        1         File not found.
+        2         Access violation.
+        3         Disk full or allocation exceeded.
+        4         Illegal operation.
+        5         Unknown transfer ID.
+        6         File already exists.
+
+#+END_SRC
+
+**** Tech Used
+- Client is implemented using Gevent's monkey patched socket.
+- Server is implemented using Gevent's DatagramServer

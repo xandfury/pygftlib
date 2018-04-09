@@ -1,17 +1,9 @@
-# Adapted from ___
-"""
-Defining all packet type for the HFTP protocol.
-"""
 import struct
 import sys
 
 from pygftlib.helpers import *
 import logging
 logger = logging.getLogger(__name__)
-# For debugging --
-# import logging as logger
-# logger.basicConfig(stream=sys.stdout, level=logger.INFO)
-# TODO: More logging in b/w classes
 
 
 class BasePacket(object):
@@ -26,13 +18,13 @@ class BasePacket(object):
         self.encode = self.build_packet
 
     def build_packet(self, **kwargs):
-        """This method is used to receive data from a FileObject/InitRQ and gets encoded to be sent
+        """This method is used to receive data from a FileObject/InitRQ and get it encoded; So that later we may send it
         across the network. Note that this bytes sent here would not contain the op_code bytes as they are taken care
         of in the ProtocolFactory"""
         raise NotImplementedError
 
     def parse_packet(self, data):
-        """Used the parse the contents of the packet. Again decoced content would be devoid of the op_code. Which is
+        """Used the parse the contents of the packet. Again decoded content would be devoid of the op_code. Which is
         how it should be"""
         raise NotImplementedError
 
