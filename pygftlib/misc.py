@@ -9,7 +9,7 @@ def create_logger():
     fileHandler = logging.FileHandler('pygftlib.log')
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
-
+    rootLogger.handlers.clear()  # remove duplicate entries
     consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(logFormatter)
     rootLogger.addHandler(consoleHandler)

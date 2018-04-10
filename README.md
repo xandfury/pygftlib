@@ -38,17 +38,11 @@ $ pygftlib receive
 
 Starting Receiver/Server on 127.0.0.1:12345
 [INFO:2018-04-08 23:15:08,719]:root: Starting Receiver/Server on 127.0.0.1:12345
-New client has connected. Connection from 127.0.0.1:56270
 [INFO:2018-04-08 23:15:37,463]:pygftlib.protocol: New client has connected. Connection from 127.0.0.1:56270
-Creating new file with name: data.txt for client ('127.0.0.1', 56270)
 [INFO:2018-04-08 23:15:37,464]:pygftlib.protocol: Creating new file with name: data.txt for client ('127.0.0.1', 56270)
-File Transfer Complete! Wrote 2018-04-08 23:15:37 - data-txt to disk
 [INFO:2018-04-08 23:15:38,475]:pygftlib.protocol: File Transfer Complete! Wrote 2018-04-08 23:15:37 - data-txt to disk
-Removing client ('127.0.0.1', 56270) context. Either transfer has completed or client has been inactive for over 40 seconds
 [INFO:2018-04-08 23:15:39,476]:pygftlib.protocol: Removing client ('127.0.0.1', 56270) context. Either transfer has completed or client has been inactive for over 40 seconds
-New client has connected. Connection from 127.0.0.1:56270
 [INFO:2018-04-08 23:15:39,477]:pygftlib.protocol: New client has connected. Connection from 127.0.0.1:56270
-Invalid/Malformed INITRQ packet received from client ('127.0.0.1', 56270)
 [WARNING:2018-04-08 23:15:39,479]:pygftlib.protocol: Invalid/Malformed INITRQ packet received from client ('127.0.0.1', 56270)
 
 ```
